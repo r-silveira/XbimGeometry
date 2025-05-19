@@ -204,6 +204,9 @@
 		<None Update="TestFiles\polyline_with_very_close_points.ifc">
 		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>
+		<None Update="TestFiles\Regression\FaceSetWithColinearFaceVertices.ifc">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
 		<None Update="TestFiles\SurfaceCurveSweptAreaSolid_5.ifc">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>

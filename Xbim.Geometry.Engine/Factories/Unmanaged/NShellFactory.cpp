@@ -158,18 +158,25 @@ TopoDS_Shell NShellFactory::BuildConnectedFaceSet
 			}
 			else
 			{
-				//we have all the points on the face get a plane to fit them
-				GeomPlate_BuildAveragePlane averagePlaneBuilder(pointsOnFace, pointsOnFace->Size(), tolerance, 1, 2);
-				if (!averagePlaneBuilder.IsPlane())
-				{
-					planarSurfaces.Append(Handle(Geom_Plane)());
-					if(averagePlaneBuilder.IsLine())
-						pLoggingService->LogDebug("Face is a line not a plane,  skipped");
+				if (ArePointsCollinear(pointsOnFace)) {
+                				pLoggingService->LogWarning("Face is collinear, skipped");
+                				faces.pop_back();
+                }
+                else 
+                {
+					//we have all the points on the face get a plane to fit them
+					GeomPlate_BuildAveragePlane averagePlaneBuilder(pointsOnFace, pointsOnFace->Size(), tolerance, 1, 2);
+					if (!averagePlaneBuilder.IsPlane())
+					{
+						planarSurfaces.Append(Handle(Geom_Plane)());
+						if (averagePlaneBuilder.IsLine())
+							pLoggingService->LogDebug("Face is a line not a plane,  skipped");
+						else
+							pLoggingService->LogDebug("Non-Planar face,  skipped");
+					}
 					else
-						pLoggingService->LogDebug("Non-Planar face,  skipped");
-				}
-				else
-					planarSurfaces.Append(averagePlaneBuilder.Plane());
+						planarSurfaces.Append(averagePlaneBuilder.Plane());
+                }
 			}
 			faceIndex++;
 		}
@@ -383,3 +390,42 @@ TopoDS_Shape NShellFactory::FixShell(TopoDS_Shell& shell,  bool& isFixed)
 	return shell;
 }
 
+Standard_Boolean NShellFactory::ArePointsCollinear(const Handle(TColgp_HArray1OfPnt)& thePoints, Standard_Real theLinTol)
+{
+	if (thePoints.IsNull())
+		throw Standard_DomainError("ArePointsCollinear: null handle supplied.");
+
+	const Standard_Integer low = thePoints->Lower();
+	const Standard_Integer high = thePoints->Upper();
+
+	const Standard_Integer count = high - low + 1;
+	if (count < 3)
+		return Standard_True;
+
+	gp_Pnt P0 = thePoints->Value(low);
+	gp_Pnt P1;
+	Standard_Boolean found = Standard_False;
+
+	for (Standard_Integer i = low + 1; i <= high; ++i)
+	{
+		P1 = thePoints->Value(i);
+		if (P0.SquareDistance(P1) > theLinTol * theLinTol)
+		{
+			found = Standard_True;
+			break;
+		}
+	}
+	if (!found)
+		return Standard_True;
+
+	const gp_Vec dirVec(P0, P1);
+	const gp_Lin refLine(P0, gp_Dir(dirVec));
+
+	for (Standard_Integer i = low; i <= high; ++i)
+	{
+		const gp_Pnt& P = thePoints->Value(i);
+		if (refLine.Distance(P) > theLinTol)
+			return Standard_False;
+	}
+	return Standard_True;
+}

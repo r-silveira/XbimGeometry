@@ -26,5 +26,10 @@ public:
 	TopoDS_Shape TrimTopology(const TopoDS_Shape& shape);
 	TopoDS_Shape FixShell(TopoDS_Shell& shell, bool& isFixed);
 
+private:
+	Standard_Boolean ArePointsCollinear(const Handle(TColgp_HArray1OfPnt)& thePoints,
+			Standard_Real theLinTol = Precision::Confusion());
+
+
 };
 
