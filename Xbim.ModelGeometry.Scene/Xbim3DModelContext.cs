@@ -800,8 +800,9 @@ namespace Xbim.ModelGeometry.Scene
         /// <param name="progDelegate">A progress delegate</param>
         /// <param name="adjustWcs">When <c>true</c> adjusts for World Coordinate System placement</param>
         /// <param name="generateBREPs">When <c>true</c> meshing is based off BREPs (slower) otherwise <c>false</c> indicates we just want a mesh, without interim BREPs (faster)</param>
+        /// <param name="postTessellationCallback"></param>
         /// <returns></returns>
-        public bool CreateContext(ReportProgressDelegate progDelegate = null, bool adjustWcs = true, bool generateBREPs = false)
+        public bool CreateContext(ReportProgressDelegate progDelegate = null, bool adjustWcs = true, bool generateBREPs = false, Func<XbimTriangulatedMesh, int, XbimTriangulatedMesh> postTessellationCallback = null)
         {
             _logger.LogTrace("Starting creation of model scene");
             //NB we no longer support creation of  geometry storage other than binary, other code remains for reading but not writing 
@@ -842,7 +843,7 @@ namespace Xbim.ModelGeometry.Scene
                         contextHelper.ParallelOptions.MaxDegreeOfParallelism = MaxThreads;
                     }
 
-                    WriteShapeGeometries(contextHelper, progDelegate, geometryTransaction, geomStorageType);
+                    WriteShapeGeometries(contextHelper, progDelegate, geometryTransaction, geomStorageType, postTessellationCallback);
                     PrepareMapGeometryReferences(contextHelper, progDelegate);
 
                     // process features
@@ -1474,12 +1475,12 @@ namespace Xbim.ModelGeometry.Scene
         public int MaxThreads { get; set; }
 
 
-        private void WriteShapeGeometries(XbimCreateContextHelper contextHelper, ReportProgressDelegate progDelegate, IGeometryStoreInitialiser geometryStore, XbimGeometryType geomStorageType)
+        private void WriteShapeGeometries(XbimCreateContextHelper contextHelper, ReportProgressDelegate progDelegate, IGeometryStoreInitialiser geometryStore, XbimGeometryType geomStorageType, Func<XbimTriangulatedMesh, int, XbimTriangulatedMesh> postTessellationCallback = null)
         {
             var localPercentageParsed = contextHelper.PercentageParsed;
             var localTally = contextHelper.Tally;
             // var dedupCount = 0;
-            var xbimTessellator = new XbimTessellator(Model, geomStorageType);
+            var xbimTessellator = new XbimTessellator(Model, geomStorageType, postTessellationCallback: postTessellationCallback);
             //var geomHash = new ConcurrentDictionary<RepresentationItemGeometricHashKey, int>();
 
             //var mapLookup = new ConcurrentDictionary<int, int>();
