@@ -523,11 +523,17 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Xbim.Geometry.Abstractions">
-      <Version>6.2.370-develop</Version>
+      <Version>6.2.371-develop</Version>
     </PackageReference>
     <PackageReference Include="Xbim.Geometry.Occt">
       <Version>7.8.1</Version>
     </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Xbim.Tessellator\Xbim.Tessellator.csproj">
+      <Project>{2ff7ea98-4993-491a-9f05-3cac1242828e}</Project>
+      <Name>Xbim.Tessellator</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="OcctLibraries">

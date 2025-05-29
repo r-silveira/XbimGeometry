@@ -1,5 +1,4 @@
 <Project>
-
   <PropertyGroup>
     <IsTestProject Condition="$(MSBuildProjectName.EndsWith('Tests')) OR $(MSBuildProjectName.EndsWith('Regression'))">true</IsTestProject>
   </PropertyGroup>

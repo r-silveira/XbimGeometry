@@ -150,6 +150,12 @@
 		<None Update="TestFiles\Github\Github_issue_512b.ifc">
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
+		<None Update="TestFiles\Ifc4TestFiles\IFC4TessellationComplex.ifc">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="TestFiles\Ifc4TestFiles\IfcTriangulatedFaceSet.ifc">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
 		<None Update="TestFiles\Ifc4TestFiles\wffdmcc3-_Navis - Existing.ifc">
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
@@ -186,6 +192,9 @@
 		<None Update="TestFiles\IFC4x3\T2.ifc">
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
+		<None Update="TestFiles\IFC4x3\tessellation-with-individual-colors.ifc">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
 		<None Update="TestFiles\IFC4x3\test.ifc">
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
@@ -199,6 +208,12 @@
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
 		<None Update="TestFiles\IfcExamples\csg-primitive.ifc">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="TestFiles\IfcExamples\Roof-01_BCAD.ifc">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="TestFiles\IfcExamples\SampleHouse4.ifc">
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
 		<None Update="TestFiles\polyline_with_very_close_points.ifc">
@@ -571,6 +586,7 @@
 			
 			<Private>True</Private>
 		</ProjectReference>
+		<ProjectReference Include="..\Xbim.Tessellator\Xbim.Tessellator.csproj" />
 	</ItemGroup>
 
 	
