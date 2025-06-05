@@ -2,12 +2,35 @@
 using System.Collections.Generic;
 using System.Linq;
 
+/// <summary>
+/// Represents a control point for a custom deflection strategy.
+/// Each point defines a target number of facets for a specific combination
+/// of section width (in millimeters) and slenderness ratio.
+/// </summary>
 public class DeflectionControlPoint
 {
+    /// <summary>
+    /// Gets or sets the section width in millimeters for this control point.
+    /// </summary>
     public double SectionWidthMm { get; set; }
+
+    /// <summary>
+    /// Gets or sets the slenderness ratio (sweep length / smallest section dimension) for this control point.
+    /// </summary>
     public double SlendernessRatio { get; set; }
+
+    /// <summary>
+    /// Gets or sets the target number of facets to be generated when geometry matches
+    /// the <see cref="SectionWidthMm"/> and <see cref="SlendernessRatio"/> of this control point.
+    /// </summary>
     public int TargetFacets { get; set; }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="DeflectionControlPoint"/> class.
+    /// </summary>
+    /// <param name="sectionWidthMm">The section width in millimeters.</param>
+    /// <param name="slendernessRatio">The slenderness ratio.</param>
+    /// <param name="targetFacets">The target number of facets.</param>
     public DeflectionControlPoint(double sectionWidthMm, double slendernessRatio, int targetFacets)
     {
         SectionWidthMm = sectionWidthMm;
@@ -15,32 +38,73 @@ public class DeflectionControlPoint
         TargetFacets = targetFacets;
     }
 
+    /// <summary>
+    /// Returns a string representation of the control point.
+    /// </summary>
+    /// <returns>A string detailing the section width, slenderness, and target facets.</returns>
     public override string ToString()
     {
         return $"SectionWidth: {SectionWidthMm}mm, Slenderness: {SlendernessRatio}, TargetFacets: {TargetFacets}";
     }
 }
 
-
+/// <summary>
+/// Defines the type of strategy to use for interpolating or selecting target facets
+/// from the provided <see cref="CustomDeflectionStrategy.ControlPoints"/>.
+/// </summary>
 public enum StrategyType
 {
+    /// <summary>
+    /// Uses bilinear interpolation between control points to determine the target facet count.
+    /// If interpolation is not possible (e.g., insufficient points), it falls back to <see cref="NearestNeighbor"/>.
+    /// </summary>
     BilinearInterpolation,
+
+    /// <summary>
+    /// Selects the target facet count from the control point that is closest (in terms of Euclidean distance
+    /// in the SectionWidthMm-SlendernessRatio space) to the input geometry's characteristics.
+    /// </summary>
     NearestNeighbor,
 }
 
+/// <summary>
+/// Provides a customizable strategy for determining the target number of facets
+/// for swept geometry based on its section width and slenderness.
+/// This allows for fine-grained control over the level of detail, overriding default calculations.
+/// </summary>
 public class CustomDeflectionStrategy
 {
     private const double NumericalTolerance = 1e-10;
     private readonly StrategyType _strategyType;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="CustomDeflectionStrategy"/> class.
+    /// </summary>
+    /// <param name="strategyType">The interpolation/selection strategy to use. Defaults to <see cref="StrategyType.BilinearInterpolation"/>.</param>
     public CustomDeflectionStrategy(StrategyType strategyType = StrategyType.BilinearInterpolation)
     {
         _strategyType = strategyType;
     }
 
+    /// <summary>
+    /// Gets or sets the list of <see cref="DeflectionControlPoint"/> instances
+    /// that define this custom strategy. These points are used by the chosen
+    /// <see cref="StrategyType"/> to determine the target facet count.
+    /// </summary>
     public List<DeflectionControlPoint> ControlPoints { get; set; } = new();
 
-
+    /// <summary>
+    /// Calculates the target number of facets for a given section width and slenderness ratio
+    /// based on the <see cref="ControlPoints"/> and the specified <see cref="StrategyType"/>.
+    /// </summary>
+    /// <param name="sectionWidthMm">The section width of the geometry in millimeters.</param>
+    /// <param name="slendernessRatio">The slenderness ratio of the geometry.</param>
+    /// <returns>
+    /// The calculated target number of facets. Returns a default of 6 if no control points are defined.
+    /// Returns a minimum of 3 facets even if calculations result in a lower number.
+    /// If <see cref="StrategyType.BilinearInterpolation"/> is used and fails (e.g. due to insufficient points),
+    /// it falls back to a nearest neighbor approach.
+    /// </returns>
     public int GetTargetFacets(double sectionWidthMm, double slendernessRatio)
     {
         if (!ControlPoints.Any())
@@ -62,7 +126,9 @@ public class CustomDeflectionStrategy
         return closest?.TargetFacets ?? 6;
     }
 
-
+    /// <summary>
+    /// Performs bilinear interpolation using the control points to find a target facet value.
+    /// </summary>
     private double? BilinearInterpolate(double x, double y)
     {
         var xValues = ControlPoints.Select(cp => cp.SectionWidthMm).Distinct().OrderBy(v => v).ToArray();
@@ -137,6 +203,9 @@ public class CustomDeflectionStrategy
                 f22.Value * (x - x1) * (y - y1)) / denom;
     }
 
+    /// <summary>
+    /// Retrieves the exact target facet value from a control point matching the given x (section width) and y (slenderness ratio).
+    /// </summary>
     private int? GetValueAt(double x, double y)
     {
         const double tolerance = 1e-6;
@@ -146,6 +215,9 @@ public class CustomDeflectionStrategy
             ?.TargetFacets;
     }
 
+    /// <summary>
+    /// Performs linear interpolation between two points.
+    /// </summary>
     private double LinearInterpolate(double x, double x1, double x2, double y1, double y2)
     {
         if (Math.Abs(x2 - x1) < NumericalTolerance)
@@ -154,11 +226,12 @@ public class CustomDeflectionStrategy
         return y1 + (y2 - y1) * (x - x1) / (x2 - x1);
     }
 
-
+    /// <summary>
+    /// Adds a new control point to the strategy.
+    /// </summary>
     public CustomDeflectionStrategy AddPoint(double sectionWidth, double slenderness, int facets)
     {
         ControlPoints.Add(new DeflectionControlPoint(sectionWidth, slenderness, facets));
         return this;
     }
-
 }

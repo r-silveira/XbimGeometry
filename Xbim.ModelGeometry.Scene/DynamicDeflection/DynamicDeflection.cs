@@ -14,7 +14,7 @@ namespace Xbim.ModelGeometry.Scene
         public double Linear;
         public double Angular;
 
-        public Deflection(double linear, double angular) : this()
+        public Deflection(double linear, double angular) 
         {
             Linear = linear;
             Angular = angular;

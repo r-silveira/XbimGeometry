@@ -41,6 +41,13 @@ namespace Xbim.Tessellator.MeshSimplification
             }
         }
 
+        /// <summary>
+        /// Simplifies the mesh to a target number of triangles.
+        /// The simplification process iteratively contracts edges with the lowest cost
+        /// until the target triangle count is reached or no more valid contractions can be performed.
+        /// </summary>
+        /// <param name="targetTriCount">The desired number of triangles in the simplified mesh.</param>
+        /// <returns>A new <see cref="XbimTriangulatedMesh"/> containing the simplified geometry.</returns>
         public XbimTriangulatedMesh Simplify(int targetTriCount)
         {
             while (ValidTriangleCount() > targetTriCount && _edgeHeap.Count > 0)
@@ -88,7 +95,6 @@ namespace Xbim.Tessellator.MeshSimplification
 
             return mesh;
         }
-
 
         private void ComputeVertexQuadrics(XbimTriangulatedMesh mesh)
         {
@@ -183,7 +189,6 @@ namespace Xbim.Tessellator.MeshSimplification
             e.Cost = (float)q.Evaluate(e.Optimal);
         }
 
-
         private bool CanContract(Edge e)
         {
             if (e is null || !e.IsValid)
@@ -240,10 +245,9 @@ namespace Xbim.Tessellator.MeshSimplification
             return true;
         }
 
-
         // True only when every vertex that touches both endpoints of the edge is already part
         // of the two triangles incident to that edge, guaranteeing the operation keeps
-        // the mesh 2-manifold and avoids creating a “three-triangle edge
+        // the mesh 2-manifold and avoids creating a three-triangle edge
         private bool CheckLinkCondition(int v0, int v1, IReadOnlyList<Triangle> edgeTris)
         {
             // Collect one-ring neighbours of v0 and v1 via connectivity sstructure
@@ -465,7 +469,6 @@ namespace Xbim.Tessellator.MeshSimplification
 
             return true;
         }
-
 
         private int ContractEdge(Edge edge)
         {
