@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using Xbim.Common;
@@ -25,8 +26,8 @@ namespace Xbim.ModelGeometry.Scene
     {
         private readonly IModelFactors _modelFactors;
         private readonly IXbimGeometryEngine _engine;
-        private readonly Dictionary<int, double> _curveLengthCache = new Dictionary<int, double>();
-        private readonly Dictionary<int, (double, double)> _curveBoundsCache = new Dictionary<int, (double, double)>();
+        private readonly ConcurrentDictionary<int, double> _curveLengthCache = new();
+        private readonly ConcurrentDictionary<int, (double, double)> _curveBoundsCache = new();
 
         public DynamicDeflection(IModelFactors modelFactors, IXbimGeometryEngine engine, ILogger logger) : base(logger)
         {
