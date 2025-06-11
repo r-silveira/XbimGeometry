@@ -217,14 +217,14 @@ namespace Xbim.Tessellator.MeshSimplification
                 throw new InvalidOperationException("Boundary edge with two triangles");
 
             var t0 = _connectivity.GetTriangle(e.T0);
-            var t0ThirdV = t0.GetThirdVertex(e.V0, e.V1);
+            var t0ThirdV = t0 is null ? XbimTriangulatedMeshConnectivity.InvalidId : t0.GetThirdVertex(e.V0, e.V1);
             var t1 = _connectivity.GetTriangle(e.T1);
             var t1ThirdV = t1 is null ? XbimTriangulatedMeshConnectivity.InvalidId : t1.GetThirdVertex(e.V0, e.V1);
 
-            if (!t0.IsValid && !t1.IsValid)
+            if (t0ThirdV == t1ThirdV)
                 return false;
 
-            if (t0ThirdV == t1ThirdV)
+            if (!t0.IsValid && !t1.IsValid)
                 return false;
 
             if (!CheckNeighbourhood(e.V0, e.V1, t0ThirdV, t1ThirdV, out int ac, out int ad, out int bc, out int bd))

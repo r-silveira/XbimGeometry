@@ -27,7 +27,6 @@ namespace Xbim.Tessellator
         public static XbimTriangulatedMeshConnectivity BuildConnectivity(XbimTriangulatedMesh mesh)
         {
             XbimTriangulatedMeshConnectivity connectivity = new XbimTriangulatedMeshConnectivity();
-            int nextTriangleId = 0;
 
             foreach (var face in mesh.Faces)
             {
@@ -35,15 +34,13 @@ namespace Xbim.Tessellator
 
                 foreach (var triangle in face.Value)
                 {
-                    int triangleId = nextTriangleId++;
-
                     int v0 = triangle[0].StartVertexIndex;
                     int v1 = triangle[1].StartVertexIndex;
                     int v2 = triangle[2].StartVertexIndex;
 
-                    var added = connectivity.AddTriangle(faceId, v0, v1, v2);
+                    var triangleId = connectivity.AddTriangle(faceId, v0, v1, v2);
 
-                    if (added == InvalidId)
+                    if (triangleId == InvalidId)
                         continue;
 
                     for (int i = 0; i < 3; i++)
@@ -88,7 +85,7 @@ namespace Xbim.Tessellator
         {
             if (v0 == v1 || v1 == v2 || v2 == v0)
             {
-                return int.MinValue;
+                return InvalidId;
             }
 
             int tId = _nextTriangleId++;
