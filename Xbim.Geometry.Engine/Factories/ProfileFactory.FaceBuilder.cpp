@@ -192,10 +192,19 @@ namespace Xbim
 				}
 				else
 				{
-					auto innerEdge = EDGE_FACTORY->BuildCircle(ifcCircleHollowProfileDef->Radius - ifcCircleHollowProfileDef->WallThickness, gpax2); //throws an exception
-					auto innerWire = EXEC_NATIVE->MakeWire(innerEdge);
-					innerWire.Reverse();
-					face = EXEC_NATIVE->MakeFace(outerWire, innerWire, ModelGeometryService->Precision);
+					double innerRadius = ifcCircleHollowProfileDef->Radius - ifcCircleHollowProfileDef->WallThickness;
+					if (innerRadius > 0)
+					{
+						auto innerEdge = EDGE_FACTORY->BuildCircle(innerRadius, gpax2);
+						auto innerWire = EXEC_NATIVE->MakeWire(innerEdge);
+						innerWire.Reverse();
+						face = EXEC_NATIVE->MakeFace(outerWire, innerWire, ModelGeometryService->Precision);
+					}
+					else
+					{
+						LogInformation(ifcCircleHollowProfileDef, "Circle hollow profile has an inner radius less than zero");
+						face = EXEC_NATIVE->MakeFace(outerWire);
+					}
 				}
 				if (face.IsNull())
 					throw RaiseGeometryFactoryException("Failed to create profile face", ifcCircleHollowProfileDef);
