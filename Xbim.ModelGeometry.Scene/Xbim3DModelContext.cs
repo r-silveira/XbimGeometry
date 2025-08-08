@@ -463,7 +463,8 @@ namespace Xbim.ModelGeometry.Scene
                             continue;
 
                         // Write product representations of context
-                        foreach (var rep in product.Representation.Representations.Where(r => _modelContext.IsInContext(Contexts, r) && r.IsBodyRepresentation()))
+                        foreach (var rep in product.Representation.Representations.Where(r => _modelContext.IsInContext(Contexts, r) && 
+                            r.IsBodyRepresentation(_modelContext.BodyRepresentations)))
                         {
                             foreach (var shape in rep.Items.Where(i => !(i is IIfcGeometricSet)))
                             {
@@ -535,7 +536,13 @@ namespace Xbim.ModelGeometry.Scene
         /// </summary>
         /// <remarks>Defaults to 60 secomds if not specified in 'BooleanTimeOut' appSetting - but overideable statically</remarks>
         static public int BooleanTimeOutMilliSeconds;
-        
+        /// <summary>
+        /// The set of Body Representation Identifiers to be considered as 3D Body representation
+        /// </summary>
+        public HashSet<string> BodyRepresentations { get; } = new HashSet<string> { "body", /* "surface", */ "facetation", "reference" };
+        // TODO: Review 'facetation' is non standard and only seems to occur in old 2x2 models
+        // e.g. https://github.com/Autodesk/revit-ifc/blob/1fa27c402e1a3ed813594d09273f90ca31393815/Source/Revit.IFC.Import/Data/IFCRepresentation.cs#L102
+
         static Xbim3DModelContext()
         {
             var timeOut = System.Configuration.ConfigurationManager.AppSettings["BooleanTimeOut"];
@@ -611,6 +618,12 @@ namespace Xbim.ModelGeometry.Scene
 
             var parentContexts = builtContextList.OfType<IIfcGeometricRepresentationSubContext>().Select(x => x.ParentContext).Distinct().ToList(); // tolist is needed to prevent collection change.
             builtContextList.AddRange(parentContexts);
+
+            // There can be multiple (non-sub) Contexts in a model - especially in merged models. Not all will always have Child contexts
+            var childlessContexts = model.Instances.OfType<IIfcGeometricRepresentationContext>()
+                .Where(c => !(c is IIfcGeometricRepresentationSubContext))
+                .Where(c => !c.HasSubContexts.Any());
+            builtContextList.AddRange(childlessContexts);
 
             // from this moment we are using the same code we were using before on the prepared builtContextList
             // 
@@ -875,7 +888,7 @@ namespace Xbim.ModelGeometry.Scene
             var openingAndProjectionOps = new ConcurrentBag<XbimProductBooleanInfo>(); // prepares the information to perform the openings and projections
             // srl this was a workaround to resolve some isues with OCC booleans that are now fixed in 7.3
             // var precision = Math.Max(_model.ModelFactors.OneMilliMeter / 50, _model.ModelFactors.Precision); //set the precision to 100th mm but never less than precision
-            var p = Model.Instances.OfType<IIfcProject>().FirstOrDefault();
+            //var p = Model.Instances.OfType<IIfcProject>().FirstOrDefault();
             //if (
             //    p != null
             //    && p.OwnerHistory.OwningApplication.ApplicationFullName.Value.ToString().Contains("Archicad")
@@ -1144,7 +1157,7 @@ namespace Xbim.ModelGeometry.Scene
                     return;
 
                 // Write product representations of context
-                if (product.Representation.Representations.Any(r => IsInContext(_contexts, r) && r.IsBodyRepresentation()))
+                if (product.Representation.Representations.Any(r => IsInContext(_contexts, r) && r.IsBodyRepresentation(BodyRepresentations)))
                 {
                     WriteProductShape(contextHelper, product, true, txn);
                 }
@@ -1197,7 +1210,7 @@ namespace Xbim.ModelGeometry.Scene
             if (product.Representation.Representations == null)
                 return Enumerable.Empty<XbimShapeInstance>();
 
-            var reps = product.Representation.Representations.Where(r => IsInContext(_contexts, r) && r.IsBodyRepresentation());
+            var reps = product.Representation.Representations.Where(r => IsInContext(_contexts, r) && r.IsBodyRepresentation(BodyRepresentations));
 
             // logic to classify feature tagging
             var repType = includesOpenings

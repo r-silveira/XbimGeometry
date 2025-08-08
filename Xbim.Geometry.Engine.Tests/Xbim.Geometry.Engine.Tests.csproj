@@ -231,6 +231,9 @@
 		<None Update="TestFiles\MeshSimplificationTestCases\IfcFlowTerminal.ifc">
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
+		<None Update="TestFiles\MultiProjectWithSurfaceModels.ifc">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
 		<None Update="TestFiles\polyline_with_very_close_points.ifc">
 		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Xbim.Ifc4.Interfaces;
 
 namespace Xbim.ModelGeometry.Scene.Extensions
@@ -10,14 +11,15 @@ namespace Xbim.ModelGeometry.Scene.Extensions
         /// returns true if the representation is a 3D Shape (solid or surface), if it is a curve or curve set returns false
         /// </summary>
         /// <param name="rep"></param>
+        /// <param name="supportedRepresentations"></param>
         /// <returns></returns>
-        public static bool IsBodyRepresentation(this IIfcRepresentation rep)
+        public static bool IsBodyRepresentation(this IIfcRepresentation rep, HashSet<string> supportedRepresentations)
         {
             if (string.IsNullOrEmpty(rep.RepresentationIdentifier)) return false;
             string repIdentifier = rep.RepresentationIdentifier.Value;
             //if it is defined as body then it is candidate but exclude if it is using a line base representation
-            const string repIdentifiers = "body;facetation;reference";
-            if (repIdentifiers.Contains(repIdentifier.ToLowerInvariant()))
+            
+            if (supportedRepresentations.Contains(repIdentifier.ToLowerInvariant()))
             {
                 //this should always be defined in an ifc2x3 schema but if it is not assume a solid
                 if (!rep.RepresentationType.HasValue) return true;

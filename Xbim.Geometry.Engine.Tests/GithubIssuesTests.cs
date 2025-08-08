@@ -1,12 +1,11 @@
 ﻿using FluentAssertions;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
-using Xbim.Common.Configuration;
 using Xbim.Common.Geometry;
 using Xbim.Common.Model;
 using Xbim.Geometry.Abstractions;
 using Xbim.Geometry.Engine.Interop;
+using Xbim.Ifc;
 using Xbim.Ifc4.Interfaces;
 using Xbim.IO.Memory;
 using Xbim.ModelGeometry.Scene;
@@ -97,6 +96,45 @@ namespace Xbim.Geometry.Engine.Tests
 
                 timer.ElapsedMilliseconds.Should().BeLessThan(10000);
             }
+        }
+
+        [Theory]
+        [InlineData(XGeometryEngineVersion.V5)]
+        [InlineData(XGeometryEngineVersion.V6)]
+        public void SupportMultipleProjectsAndContexts(XGeometryEngineVersion engineVersion)
+        {
+            
+            using (var m = new MemoryModel(new Ifc2x3.EntityFactoryIfc2x3()))
+            {
+                // Multiple quirks in this model:
+                // 1. Has two projects and sites (& two RepresentationContexts - one of which has no sub context)
+                // 2. ShapeRepresentation with an Identifier of 'Surface' for 'SurfaceModel' - when a Body is typically expected.
+                m.LoadStep21(@"TestFiles\MultiProjectWithSurfaceModels.ifc");
+                
+                var c = new Xbim3DModelContext(m, _loggerFactory, engineVersion);
+                c.BodyRepresentations.Add("surface");
+                
+                var result = c.CreateContext(null, false);
+                result.Should().Be(true);
+                c.ShapeInstances().Should().HaveCount(3);
+                c.ShapeGeometries().Should().HaveCount(3);
+
+                var wexBimFilename = @"TestFiles\MultiProjectWithSurfaceModels.wexbim";
+                // Optional: Export to 'wexbim' format for use in WebUI's xViewer - geometry only
+                using (var wexBimFile = File.Create(wexBimFilename))
+                {
+                    using (var wexBimBinaryWriter = new BinaryWriter(wexBimFile))
+                    {
+                        m.SaveAsWexBim(wexBimBinaryWriter);
+                        wexBimBinaryWriter.Close();
+                    }
+                    wexBimFile.Close();
+                }
+
+
+            }
+
+
         }
 
 
