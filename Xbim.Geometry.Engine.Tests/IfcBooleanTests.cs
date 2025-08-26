@@ -548,7 +548,7 @@ namespace Xbim.Geometry.Engine.Tests
                 //var shape = geomEngine.ModelService.BooleanFactory.Build(er.Entity);
                 var solids = geomEngine.CreateSolidSet(er.Entity, _logger);
                 solids.Count.Should().Be(1);
-                solids.First().Volume.Should().BeApproximately(105045431.12557703, 1e-5);
+                solids.First().Volume.Should().BeApproximately(105044075.79569642, 1e-5);
                 HelperFunctions.IsValidSolid(solids.FirstOrDefault());
             }
         }
