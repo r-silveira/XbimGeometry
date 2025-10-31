@@ -36,6 +36,8 @@
 #include <TopoDS.hxx>
 #include <TopoDS_Face.hxx>
 #include <GeomAPI_ProjectPointOnCurve.hxx>
+#include <GCPnts_AbscissaPoint.hxx>
+
 
 TColgp_Array1OfPnt NCurveFactory::GetPointsFromProjectionAndHeightCurves(TColgp_Array1OfPnt& points, Standard_Integer nbPoints, Handle(Geom2d_Curve) projection, Handle(Geom2d_Curve) height)
 {
@@ -280,53 +282,55 @@ Handle(Geom2d_BSplineCurve) NCurveFactory::BuildCompositeCurve2d(const TColGeom2
 			Handle(Geom2d_BoundedCurve) curve = *it;
 			Handle(Geom2d_Spiral) spiral = Handle(Geom2d_Spiral)::DownCast(curve);
 			Handle(Geom2d_Polynomial) polynomial = Handle(Geom2d_Polynomial)::DownCast(curve);
-			
+
+			const Standard_Real first = curve->FirstParameter();
+			const Standard_Real last = curve->LastParameter();
+
+			Handle(Geom2d_BSplineCurve) toAdd;
+
 			if (polynomial) {
 				// Approximate the curve
-				Standard_Real firstParam = curve->FirstParameter();
-				Standard_Real lastParam = curve->LastParameter();
 				int numPoints = std::max(Geom2d_Spiral::IntegrationSteps, 1000);
 				TColgp_Array1OfPnt2d points(1, numPoints);
 
 				for (Standard_Integer i = 1; i <= numPoints; ++i) {
-					Standard_Real U = firstParam + (lastParam - firstParam) * (i - 1) / (numPoints - 1);
+					Standard_Real U = first + (last - first) * (i - 1) / (numPoints - 1);
 					gp_Pnt2d P;
 					curve->D0(U, P);
 					points.SetValue(i, P);
 				}
 
 				Geom2dAPI_PointsToBSpline curveBuilder(points, 8, 8, GeomAbs_CN);
-				Handle(Geom2d_BSplineCurve) approximate = curveBuilder.Curve();
-				if (!compositeConverter.Add(approximate, tolerance, false))
-				{
-					Standard_Failure::Raise("Compound curve segment is not continuous");
-				}
+				toAdd = curveBuilder.Curve();
 			}
 			else if (spiral) {
 				// Approximate the curve
-				Standard_Real firstParam = curve->FirstParameter();
-				Standard_Real lastParam = curve->LastParameter();
 				int numPoints = spiral.get()->GetIntervalsCount();
 				TColgp_Array1OfPnt2d points(1, numPoints);
 
 				for (Standard_Integer i = 1; i <= numPoints; ++i) {
-					Standard_Real U = firstParam + (lastParam - firstParam) * (i - 1) / (numPoints - 1);
+					Standard_Real U = first + (last - first) * (i - 1) / (numPoints - 1);
 					gp_Pnt2d P;
 					curve->D0(U, P);
 					points.SetValue(i, P);
 				}
 
 				Geom2dAPI_PointsToBSpline curveBuilder(points, 8, 8, GeomAbs_CN);
-				Handle(Geom2d_BSplineCurve) approximate = curveBuilder.Curve();
-				if (!compositeConverter.Add(approximate, tolerance, false))
-				{
+				toAdd = curveBuilder.Curve();
+			}
+			else if (IsConicLike(curve)) {
+				// This covers raw conics AND trimmed/offset conics.
+				toAdd = ApproximateByArcLength(curve, first, last, tolerance, 8, GeomAbs_CN);
+			}
+			else if (!compositeConverter.Add(curve, tolerance, false))
+			{ 
+				toAdd = ApproximateByArcLength(curve, first, last, tolerance, 8, GeomAbs_CN);
+			}
+
+			if (!toAdd.IsNull()) {
+				if (!compositeConverter.Add(toAdd, tolerance, false)) {
 					Standard_Failure::Raise("Compound curve segment is not continuous");
 				}
-			}
-			else
-				if (!compositeConverter.Add(curve, tolerance, false))
-			{ 
-				Standard_Failure::Raise("Compound curve segment is not continuous");
 			}
 		}
 		return compositeConverter.BSplineCurve();
@@ -337,6 +341,72 @@ Handle(Geom2d_BSplineCurve) NCurveFactory::BuildCompositeCurve2d(const TColGeom2
 		return Handle(Geom2d_BSplineCurve)(); //return null handle for checking
 	}
 
+}
+
+Handle(Geom2d_Curve) NCurveFactory::UnwrapBasis(const Handle(Geom2d_Curve)& c)
+{
+	Handle(Geom2d_Curve) cur = c;
+	// unwrap nested trims/offsets (be defensive)
+	for (int guard = 0; guard < 8; ++guard) {
+		if (Handle(Geom2d_TrimmedCurve) t = Handle(Geom2d_TrimmedCurve)::DownCast(cur)) {
+			cur = t->BasisCurve();
+			continue;
+		}
+		if (Handle(Geom2d_OffsetCurve) o = Handle(Geom2d_OffsetCurve)::DownCast(cur)) {
+			cur = o->BasisCurve();
+			continue;
+		}
+		break;
+	}
+	return cur;
+}
+
+bool NCurveFactory::IsConicLike(const Handle(Geom2d_Curve)& c)
+{
+	Handle(Geom2d_Curve) base = UnwrapBasis(c);
+	return !Handle(Geom2d_Conic)::DownCast(base).IsNull();
+}
+
+// Approximate any curve over [First, Last] by equal arc-length samples
+Handle(Geom2d_BSplineCurve) NCurveFactory::ApproximateByArcLength(const Handle(Geom2d_Curve)& c,
+	Standard_Real first, Standard_Real last,
+	Standard_Real tol,
+	Standard_Integer deg,
+	GeomAbs_Shape cont)
+{
+	Geom2dAdaptor_Curve adaptor(c, first, last);
+
+	// Choose number of points from length and tolerance
+	Standard_Real L = 0.0;
+	try {
+		L = GCPnts_AbscissaPoint::Length(adaptor, first, last);
+	}
+	catch (...) {
+		L = last - first; // fallback
+	}
+	// Rough heuristic: target chord error ~ tol => segment length ~ sqrt(tol)
+	// Clamp to reasonable range
+	Standard_Integer nPts = Max(10, Min(2000, (Standard_Integer)std::ceil(Max(5.0, L / Max(1e-6, Sqrt(Max(tol, 1e-12)))))));
+
+	// Use equal arc-length stations
+	TColgp_Array1OfPnt2d pts(1, nPts);
+
+	for (Standard_Integer i = 1; i <= nPts; ++i) {
+		Standard_Real s = L * (i - 1) / (nPts - 1); // target length from 'first'
+		Standard_Real ui;
+		if (i == 1) ui = first;
+		else if (i == nPts) ui = last;
+		else {
+			GCPnts_AbscissaPoint abscissa(adaptor, s, first);
+			ui = abscissa.Parameter();
+		}
+		gp_Pnt2d P;
+		c->D0(ui, P);
+		pts.SetValue(i, P);
+	}
+
+	Geom2dAPI_PointsToBSpline builder(pts, deg, deg, cont);
+	return builder.Curve();
 }
 
 Handle(Geom2d_BSplineCurve) NCurveFactory::BuildIndexedPolyCurve2d(const TColGeom2d_SequenceOfBoundedCurve& segments, double tolerance)
@@ -358,6 +428,7 @@ Handle(Geom2d_BSplineCurve) NCurveFactory::BuildIndexedPolyCurve2d(const TColGeo
 		return Handle(Geom2d_BSplineCurve)(); //return null handle for checking
 	}
 }
+
 Handle(Geom_BSplineCurve) NCurveFactory::BuildIndexedPolyCurve3d(const TColGeom_SequenceOfBoundedCurve& segments, double tolerance)
 {
 	try
