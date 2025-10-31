@@ -99,6 +99,14 @@ public:
 private:
 	bool GetPlaneFromWire(const TopoDS_Wire& wire, gp_Pln& plane);
 	bool GetPlaneFromFace(const TopoDS_Face& face, gp_Pln& plane);
+	bool IsConicLike(const Handle(Geom2d_Curve)& c);
+	Handle(Geom2d_BSplineCurve) ApproximateByArcLength(const Handle(Geom2d_Curve)& c,
+		Standard_Real first, Standard_Real last,
+		Standard_Real tol,
+		Standard_Integer deg = 8,
+		GeomAbs_Shape cont = GeomAbs_CN);
+	Handle(Geom2d_Curve) UnwrapBasis(const Handle(Geom2d_Curve)& c);
+
 
 #pragma endregion
 

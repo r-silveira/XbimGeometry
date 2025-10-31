@@ -435,7 +435,7 @@ namespace Xbim
 				if (horizontalProjection.IsNull()) {
 					throw RaiseGeometryFactoryException("IfcGradientCurve BaseCurve could not be built", ifcGradientCurve);
 				}
-
+				
 				// Building heigth function from the curve Segments
 				for (int i = 0; i < ifcGradientCurve->NSegments; i++)
 				{
