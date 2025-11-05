@@ -71,7 +71,7 @@ namespace Xbim.Geometry.Engine.Tests
             var swept = sweptMoq.Object;
             swept.Radius = radius;
             swept.InnerRadius = innerRadius;
-            swept.Directrix = directrix ?? IfcMoq.IfcLine3dMock();
+            swept.Directrix = directrix ?? IfcMoq.IfcLine3dMock(magnitude: (endParam.HasValue? endParam.Value : 1));
             swept.StartParam = startParam;
             swept.EndParam = endParam;
             sweptMoq.SetupGet(x => x.ExpressType).Returns(metaData.ExpressType(typeof(IfcSweptDiskSolid)));

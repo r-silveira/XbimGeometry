@@ -72,6 +72,9 @@
 		<None Update="TestFiles\arbritary_closed_profile_with_intersecting_voids_test.ifc">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
+		<None Update="TestFiles\bar.stripped.ifc">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
 		<None Update="TestFiles\BooleanClippingWithHalfSpace.ifc">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
@@ -239,6 +242,9 @@
 		</None>
 		<None Update="TestFiles\polyline_with_very_close_points.ifc">
 		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+		<None Update="TestFiles\rebar_isolated.ifc">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
 		<None Update="TestFiles\Regression\FaceSetWithColinearFaceVertices.ifc">
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

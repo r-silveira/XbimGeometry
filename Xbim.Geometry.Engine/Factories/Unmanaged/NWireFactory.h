@@ -4,7 +4,6 @@
 #include <TopoDS_Builder.hxx>
 #include "../../Services/Unmanaged/NLoggingService.h"
 #include <NCollection_Vector.hxx>
-
 #include <gp_XYZ.hxx>
 #include <gp_Ax22d.hxx>
 #include "../../BRep/OccExtensions/KeyedPnt2d.h"
@@ -15,6 +14,7 @@
 #include <TColGeom2d_SequenceOfBoundedCurve.hxx>
 #include <TColGeom_SequenceOfCurve.hxx>
 #include <TopTools_SequenceOfShape.hxx>
+#include <BRepAdaptor_CompCurve.hxx>
 
 class NWireFactory : public NFactoryBase
 {
@@ -60,6 +60,15 @@ public:
 	bool GetNormal(const TopoDS_Wire& wire, gp_Vec& normal);
 	
 	double Area(const TopoDS_Wire& wire);
+
+private:
+	std::pair<Standard_Real, Standard_Real> MapIfcParametersAuto(
+		const BRepAdaptor_CompCurve& cc,
+		double u1, double u2,
+		bool preferCartesian,
+		const TopoDS_Wire& basisWire,
+		gp_Pnt p1, gp_Pnt p2,
+		double tolerance);
 	
 };
 

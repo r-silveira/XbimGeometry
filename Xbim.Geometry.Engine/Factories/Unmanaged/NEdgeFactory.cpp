@@ -33,12 +33,27 @@ TopoDS_Edge NEdgeFactory::BuildEdge(const Handle(Geom_Curve)& hCurve)
 {
 	try
 	{
-		BRepLib_MakeEdge edgeMaker;
-		edgeMaker.Init(hCurve);
-		if (!edgeMaker.IsDone())
-			Standard_Failure::Raise(GetError(edgeMaker.Error()));
-		else
-			return edgeMaker.Edge();
+		auto line = Handle(Geom_LineWithMagnitude)::DownCast(hCurve);
+		if (!line.IsNull()) {
+			const gp_Pnt p1 = line->Position().Location();
+			gp_Vec v(line->Position().Direction());
+			v *= line->Magnitude();
+			const gp_Pnt p2 = p1.Translated(v);
+			BRepLib_MakeEdge edgeMaker(p1, p2);
+			if (!edgeMaker.IsDone())
+				Standard_Failure::Raise(GetError(edgeMaker.Error()));
+			else
+				return edgeMaker.Edge();
+		}
+		else {
+			BRepLib_MakeEdge edgeMaker;
+			edgeMaker.Init(hCurve);
+			if (!edgeMaker.IsDone())
+				Standard_Failure::Raise(GetError(edgeMaker.Error()));
+			else
+				return edgeMaker.Edge();
+		}
+		
 
 	}
 	catch (const Standard_Failure& sf)
