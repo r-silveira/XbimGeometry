@@ -1,4 +1,4 @@
-#include "NWireFactory.h"
+﻿#include "NWireFactory.h"
 #include <TopoDS.hxx>
 #include <gp_Lin2d.hxx>
 #include <gp_Ax2d.hxx>
@@ -47,6 +47,7 @@
 #include <BRepGProp.hxx>
 #include <TopTools_Array1OfShape.hxx>
 #include <BRepFilletAPI_MakeFillet2d.hxx>
+#include <GCPnts_AbscissaPoint.hxx>
 
 
 bool NWireFactory::IsClosed(const TopoDS_Wire& wire, double tolerance)
@@ -556,60 +557,80 @@ TopoDS_Wire NWireFactory::BuildTrimmedWire(const TopoDS_Wire& basisWire, gp_Pnt 
 {
 	try
 	{
-
-
 		BRepAdaptor_CompCurve cc(basisWire, Standard_True);
 		GeomAbs_Shape continuity = cc.Continuity();
 		int numIntervals = cc.NbIntervals(continuity);
 
 		//calculate the start and end parameters
-		double first;
-		double last;
-		if (preferCartesian)
-		{
-			if (!GetParameter(basisWire, p1, tolerance, first))
-				Standard_Failure::Raise("Trim Point1 is not on the wire");
-			if (!GetParameter(basisWire, p2, tolerance, last))
-				Standard_Failure::Raise("Trim Point2 is not on the wire");
-		}
-		else
-		{
-			first = double::IsNaN(u1) ? 0 : u1;
-			last = double::IsNaN(u2) ? cc.LastParameter() - cc.FirstParameter() : u2;
-		}
+		auto [first, last] = MapIfcParametersAuto(cc, u1, u2, preferCartesian, basisWire, p1, p2, tolerance);
 
 		if (numIntervals == 1)
 		{
-			TopoDS_Edge edge; // the edge we are interested in
-			Standard_Real uoe; // parameter U on the edge (not used)
-			cc.Edge(last, edge, uoe);
-			Standard_Real l, f; // the parameter range is returned in f and l
-			Handle(Geom_Curve) curve = BRep_Tool::Curve(edge, f, l);
-			Handle(Geom_TrimmedCurve) trimmedCurve = Handle(Geom_TrimmedCurve)::DownCast(curve);
-			while (!trimmedCurve.IsNull()) //remove trims
-			{
-				curve = trimmedCurve->BasisCurve();
-				trimmedCurve = Handle(Geom_TrimmedCurve)::DownCast(curve);
+			// Get the single edge in this wire
+			TopoDS_Edge edge;
+			Standard_Real uoe;
+			cc.Edge((cc.FirstParameter() + cc.LastParameter()) * 0.5, edge, uoe);
+
+			Standard_Real fEdge, lEdge;
+			Handle(Geom_Curve) curve = BRep_Tool::Curve(edge, fEdge, lEdge);
+
+			// Remove any nested trims
+			if (!curve.IsNull()) {
+				Handle(Geom_TrimmedCurve) tc = Handle(Geom_TrimmedCurve)::DownCast(curve);
+				while (!tc.IsNull()) {
+					curve = tc->BasisCurve();
+					tc = Handle(Geom_TrimmedCurve)::DownCast(curve);
+				}
 			}
-			if (curve->IsPeriodic()) //stay in bounds for splines etc, keep orientation for periodics, 
-			{
-				l = last * radianFactor; //override any trims set, ensure in radians
-				f = first * radianFactor;
+
+			// Detect if the curve is a conic with angular parameter space
+			BRepAdaptor_Curve ec(edge);
+			const GeomAbs_CurveType ct = ec.GetType();
+			const bool isAngularConic = (ct == GeomAbs_Circle) || (ct == GeomAbs_Ellipse);
+
+			Standard_Real f = fEdge;
+			Standard_Real l = lEdge;
+
+			if (isAngularConic) {
+				// Interpret IFC parameters as angular, convert using radianFactor
+				auto toRad = [&](double a) { return a * radianFactor; };
+
+				Standard_Real a1 = toRad(u1);
+				Standard_Real a2 = toRad(u2);
+
+				// Normalize to 0..2π range
+				const Standard_Real per = 2.0 * M_PI;
+				auto norm = [&](Standard_Real a) {
+					a = fmod(a, per);
+					if (a < 0) a += per;
+					return a;
+					};
+				a1 = norm(a1);
+				a2 = norm(a2);
+
+				if (!sameSense)
+					std::swap(a1, a2);
+				if (a2 <= a1)
+					a2 += per; // allow wrap across 0
+
+				f = a1;
+				l = a2;
 			}
-			else
-			{
-				f = System::Math::Max(f, first);
-				l = System::Math::Min(l, last);
+			else {
+				// Use mapped parameters (already in composite space)
+				f = std::max(fEdge, first);
+				l = std::min(lEdge, last);
 			}
-			if (System::Math::Abs(f - l) > Precision::Confusion())
-			{
+
+			// Build the trimmed wire if the range is valid
+			if (std::abs(f - l) > Precision::Confusion()) {
 				Handle(Geom_TrimmedCurve) trimmed = new Geom_TrimmedCurve(curve, f, l);
 				BRepBuilderAPI_MakeWire wm;
 				wm.Add(BRepBuilderAPI_MakeEdge(trimmed));
 				return wm.Wire();
 			}
-			else
-				return TopoDS_Wire(); //empty wire
+
+			return TopoDS_Wire(); // empty wire
 		}
 		else
 		{
@@ -651,7 +672,7 @@ TopoDS_Wire NWireFactory::BuildTrimmedWire(const TopoDS_Wire& basisWire, gp_Pnt 
 					}
 				}
 				// if first is < lp  then we need to trim to end of this edge unless first is zero or has already been used
-				else if (first > 0 && first < lp)
+				else if (first > fp && first < lp)
 				{
 					gp_Pnt pFirst = cc.Value(first);
 					double uOnEdgeFirst;
@@ -693,6 +714,115 @@ TopoDS_Wire NWireFactory::BuildTrimmedWire(const TopoDS_Wire& basisWire, gp_Pnt 
 	}
 	return TopoDS_Wire();
 }
+
+std::pair<Standard_Real, Standard_Real> NWireFactory::MapIfcParametersAuto(
+	const BRepAdaptor_CompCurve& cc,
+	double u1, double u2,
+	bool preferCartesian,
+	const TopoDS_Wire& basisWire,
+	gp_Pnt p1, gp_Pnt p2,
+	double tolerance)
+{
+	const Standard_Real ff = cc.FirstParameter();
+	const Standard_Real ll = cc.LastParameter();
+	const Standard_Real Ltot = GCPnts_AbscissaPoint::Length(cc, ff, ll);
+
+	auto clamp01 = [](double t) { return t < 0.0 ? 0.0 : (t > 1.0 ? 1.0 : t); };
+
+	auto mapNormToParam = [&](double t01) {
+		return ff + clamp01(t01) * (ll - ff);
+		};
+
+	auto mapFracLenToParam = [&](double t01) {
+		if (t01 <= 0.0) return cc.FirstParameter();
+		if (t01 >= 1.0) return cc.LastParameter();
+
+		t01 = t01 < 0.0 ? 0.0 : (t01 > 1.0 ? 1.0 : t01);
+
+		const Standard_Real ff = cc.FirstParameter();
+		const Standard_Real ll = cc.LastParameter();
+
+		const Standard_Real Ltot = GCPnts_AbscissaPoint::Length(cc, ff, ll);
+		if (!std::isfinite(Ltot) || Ltot <= Precision::Confusion())
+			return ff + t01 * (ll - ff);  // fallback: domain-normalized (not by length)
+
+		const Standard_Real s = t01 * Ltot;
+
+		try {
+			GCPnts_AbscissaPoint ap(cc, s, ff, ll, Precision::Confusion());
+			if (ap.IsDone()) return ap.Parameter();
+		}
+		catch (...) {
+			// swallow and fall through to fallback
+		}
+		return ff + t01 * (ll - ff);
+	};
+
+	struct Score { Standard_Real u1{ 0 }, u2{ 0 }, len{ 0 }; bool inDomain{ false }; };
+	auto score = [&](Standard_Real a, Standard_Real b) -> Score {
+		Score r{ a,b,0,false };
+		const double eps = Precision::Confusion();
+		r.inDomain = (a >= ff - eps && a <= ll + eps && b >= ff - eps && b <= ll + eps);
+		if (!r.inDomain) return r;
+		const Standard_Real umin = std::min(a, b), umax = std::max(a, b);
+		r.len = GCPnts_AbscissaPoint::Length(cc, umin, umax);
+		return r;
+		};
+
+	double first, last;
+
+	if (preferCartesian) {
+		if (!GetParameter(basisWire, p1, tolerance, first))
+			Standard_Failure::Raise("Trim Point1 is not on the wire");
+		if (!GetParameter(basisWire, p2, tolerance, last))
+			Standard_Failure::Raise("Trim Point2 is not on the wire");
+	}
+	else {
+		const bool u1nan = std::isnan(u1);
+		const bool u2nan = std::isnan(u2);
+
+		// A) Native (spec-literal)
+		const Standard_Real A1 = u1nan ? ff : u1;
+		const Standard_Real A2 = u2nan ? ll : u2;
+
+		// B) Normalized (0..1 → [ff,ll])
+		const Standard_Real B1 = u1nan ? ff : mapNormToParam(u1);
+		const Standard_Real B2 = u2nan ? ll : mapNormToParam(u2);
+
+		// C) Length fraction (0..1 by arclength)
+		const Standard_Real C1 = u1nan ? ff : mapFracLenToParam(u1);
+		const Standard_Real C2 = u2nan ? ll : mapFracLenToParam(u2);
+
+		Score sA = score(A1, A2);
+		Score sB = score(B1, B2);
+		Score sC = score(C1, C2);
+
+		auto pick = [&](const Score& x, const Score& y) -> Score {
+			if (x.inDomain && !y.inDomain) return x;
+			if (!x.inDomain && y.inDomain) return y;
+			if (!x.inDomain && !y.inDomain) return x; // both bad
+			const double tiny = 0.05;
+			const double rx = (Ltot > 0) ? (x.len / Ltot) : 0;
+			const double ry = (Ltot > 0) ? (y.len / Ltot) : 0;
+			if (rx < tiny && ry >= tiny) return y;
+			if (ry < tiny && rx >= tiny) return x;
+			return x; // prefer left argument (Native > Normalized > Length)
+			};
+
+		Score best = pick(sA, sB);
+		best = pick(best, sC);
+
+		if (!best.inDomain) {
+			first = B1; last = B2; // fallback to normalized
+		}
+		else {
+			first = best.u1; last = best.u2;
+		}
+	}
+
+	return { first, last };
+}
+
 
 TopoDS_Wire NWireFactory::BuildWire(const TColGeom2d_SequenceOfBoundedCurve& segments, double tolerance, double gapSize)
 {

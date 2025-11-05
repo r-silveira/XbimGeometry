@@ -428,7 +428,7 @@ TopoDS_Solid NSolidFactory::BuildSweptDiskSolid(const TopoDS_Wire& directrixWire
 		if (oSweepMaker.IsDone())
 		{
 			//do we need an inner shell
-			if (!isnan(innerRadius))
+			if (!isnan(innerRadius) && innerRadius > 0)
 			{
 
 				Handle(Geom_Circle) inner = new Geom_Circle(axis, innerRadius);

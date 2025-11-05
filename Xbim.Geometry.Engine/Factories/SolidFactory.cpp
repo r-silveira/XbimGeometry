@@ -544,6 +544,7 @@ namespace Xbim
 					double innerRadius = NULLABLE_TO_DOUBLE(ifcSweptDiskSolid->InnerRadius);
 
 					TopoDS_Solid solid = EXEC_NATIVE->BuildSweptDiskSolid(directrix, ifcSweptDiskSolid->Radius, innerRadius);
+
 					return solid;
 				}
 

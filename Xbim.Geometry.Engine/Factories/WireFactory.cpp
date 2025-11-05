@@ -413,10 +413,11 @@ namespace Xbim
 
 			TopoDS_Wire WireFactory::BuildDirectrixWire(IIfcCurve^ ifcCurve, double startParam, double endParam)
 			{
-
 				TopoDS_Wire wire = BuildWire(ifcCurve, false); //throws exception
+
+				if (double::IsNaN(startParam) && double::IsNaN(endParam)) 
+					return wire; //no trimming required
 				
-				if (double::IsNaN(startParam) && double::IsNaN(endParam)) return wire; //no trimming required
 				if (dynamic_cast<IIfcPolyline^>(ifcCurve) &&
 					startParam == 0. &&
 					endParam == 1. &&

@@ -71,10 +71,11 @@ namespace Xbim.Geometry.Engine.Tests
         /// <param name="fileName"></param>
         /// <param name="requiredVolume"></param>
         [Theory]
-        [InlineData("SweptDiskSolid_1", 7725.7280894170744/*, DisplayName = "Directrix is polyline"*/)] //trim was not working correctly, it is now and the volume has been reduced
-        [InlineData("SweptDiskSolid_2", 5552149.0343576306/*, DisplayName = "Directrix is trimmed"*/)]
-        /// [InlineData("SweptDiskSolid_3", 129879.77474359272/*, DisplayName = "Directrix is indexed polyline"*/)] srl duplicate of the reference test below but with a sign error, pointless test to run
-        [InlineData("SweptDiskSolid_4", 129879.77474359272/*, DisplayName = "Ifc reference test"*/)]
+        [InlineData("SweptDiskSolid_1", 7725.7280894170744)] //trim was not working correctly, it is now and the volume has been reduced
+        [InlineData("SweptDiskSolid_2", 5552149.0343576306)]
+        [InlineData("SweptDiskSolid_4", 129879.77474359272)]
+        [InlineData("rebar_isolated", 400843.7131002933)] // start/end param don't follow native curve parameter space, but normalized parmeterizaton
+        [InlineData("bar.stripped", 499561.93942171149)]
         public void SweptDiskSolidTest(string fileName, double requiredVolume)
         {
             using (var model = MemoryModel.OpenRead($@"TestFiles\{fileName}.ifc"))
@@ -85,7 +86,6 @@ namespace Xbim.Geometry.Engine.Tests
                 var solid = geomEngine.CreateSolid(sweptDisk, _logger);
                 var str = solid.ToBRep;
                 solid.Should().NotBeNull();
-
                 solid.Volume.Should().BeApproximately(requiredVolume, 1e-7);
             }
         }
