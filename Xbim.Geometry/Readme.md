@@ -3,7 +3,7 @@
 
 XbimGeometry is part of the [Xbim Toolkit](https://github.com/xBimTeam). 
 
-This package the top level package for the xbim Geometry Engine includes the xbim Geometry engine itself
+This package is the top level nuget package for the xbim Geometry Engine which includes the xbim Geometry engine itself
 plus the interop layer, and the unmanaged OCC geometry kernel, as well as the .NET ModelGeometry.Scene.
 
 

@@ -8,6 +8,7 @@
 		<EnableUnmanagedDebugging>true</EnableUnmanagedDebugging>
     <NoWarn>CS1591</NoWarn>
     <Platforms>AnyCPU;x64;x86</Platforms>
+    <PackageReadmeFile>Readme.md</PackageReadmeFile>
 	</PropertyGroup>
 
 	
@@ -22,7 +23,7 @@
 	  <ProjectReference Include="..\Xbim.Tessellator\Xbim.Tessellator.csproj" />
 	</ItemGroup>
 	<ItemGroup>
-	  <None Update="Readme.md">
+	  <None Include="Readme.md">
 	    <PackagePath>\</PackagePath>
 	    <Pack>True</Pack>
 	  </None>

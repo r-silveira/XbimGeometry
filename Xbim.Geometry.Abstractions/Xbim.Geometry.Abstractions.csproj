@@ -1,26 +1,18 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0</TargetFrameworks>
-    <Version>6.0.0.0</Version>
-    <Configurations>Debug;Release</Configurations>
-    <Platforms>AnyCPU</Platforms>
-    <LangVersion>9.0</LangVersion>
-    <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
-    <PackageLicenseExpression>CDDL-1.0</PackageLicenseExpression>
-    <Authors>Steve Lockley</Authors>
-    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <Title>Xbim Geometry Interfaces</Title>
     <Description>Interface classes for version 6 of the Xbim Geometry Engine</Description>
-    <Copyright>Xbim Ltd.</Copyright>
-    <Company>Xbim Ltd.</Company>
-    <RepositoryUrl>https://github.com/xBimTeam/Xbim.Geometry.Abstractions</RepositoryUrl>
+    <LangVersion>latest</LangVersion>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Platforms>AnyCPU</Platforms>
+    <NoWarn>CS1591</NoWarn>
+    <PackageReadmeFile>Readme.md</PackageReadmeFile>
     <PackageTags>Xbim;BRep;Geometry;Interfaces</PackageTags>
     <PackageReleaseNotes>This is the initial release of the Geometry Interfaces for version 6 of the Xbim Geometry Engine</PackageReleaseNotes>
     <Nullable>enable</Nullable>
-    <SignAssembly>true</SignAssembly>
-    <AssemblyOriginatorKeyFile>..\XbimOpenSourceKeyFile.snk</AssemblyOriginatorKeyFile>
-    <DelaySign>false</DelaySign>
   </PropertyGroup>
+ 
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|netstandard2.0|AnyCPU'">
     <NoWarn>1701;1702;CS1591</NoWarn>
   </PropertyGroup>
@@ -28,18 +20,15 @@
     <NoWarn>1701;1702;CS1591</NoWarn>
   </PropertyGroup>
   <ItemGroup>
-    <None Update="Readme.md">
+    <None Include="Readme.md">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
     </None>
-    <None Update="xbim-toolkit-icon.png">
+    <None Include="..\xbim-toolkit-icon.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
     </None>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="../xbim-toolkit-icon.png" Pack="True" PackagePath="\" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Xbim.Essentials" Version="6.0.563" />
