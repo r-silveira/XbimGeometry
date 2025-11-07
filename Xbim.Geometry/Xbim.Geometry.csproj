@@ -7,7 +7,7 @@
 Use this package to update your XBim IModels to contain geometry that can be visualised in 3D.
 Currently this library supports IFC2x2, IFC2x3, IFC4 Addendum 2 and IFC Alignment (IFC4x1) schema.
     </Description>
-    <TargetFrameworks>net472;net6.0</TargetFrameworks>
+    <TargetFrameworks>net472;net8.0</TargetFrameworks>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageId>Xbim.Geometry</PackageId>
     <IncludeBuildOutput>false</IncludeBuildOutput>

@@ -25,10 +25,10 @@
     <Keyword>NetCoreCProj</Keyword>
     <RootNamespace>Xbim::Geometry</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <TargetFramework>net6.0</TargetFramework>
-    <OutputFolder>net6.0</OutputFolder>
+    <TargetFramework>net8.0</TargetFramework>
+    <OutputFolder>net8.0</OutputFolder>
     <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
-    <ProjectName>Xbim.Geometry.Engine.net6</ProjectName>
+    <ProjectName>Xbim.Geometry.Engine.net8</ProjectName>
   </PropertyGroup>
   <PropertyGroup>
     <SignAssembly>true</SignAssembly>
@@ -451,13 +451,13 @@
     <ClCompile Include="Visual\ColourRGB.cpp" />
     <ClCompile Include="Visual\VisualMaterial.cpp" />
     <ClCompile Include="Visual\XbimShapeColour.cpp" />
-    <ClCompile Include="XbimCompound.cpp"/>
+    <ClCompile Include="XbimCompound.cpp" />
     <ClCompile Include="XbimConvert.cpp" />
     <ClCompile Include="XbimCurve.cpp" />
     <ClCompile Include="XbimCurve2D.cpp" />
-    <ClCompile Include="XbimEdge.cpp"/>
+    <ClCompile Include="XbimEdge.cpp" />
     <ClCompile Include="XbimEdgeSet.cpp" />
-    <ClCompile Include="XbimFace.cpp"/>
+    <ClCompile Include="XbimFace.cpp" />
     <ClCompile Include="XbimFaceSet.cpp" />
     <ClCompile Include="XbimGeometryCreator.cpp" />
     <ClCompile Include="XbimGeometryCreatorV6.cpp" />
@@ -471,11 +471,11 @@
     <ClCompile Include="XbimProgressMonitor.cpp" />
     <ClCompile Include="XbimShell.cpp" />
     <ClCompile Include="XbimShellSet.cpp" />
-    <ClCompile Include="XbimSolid.cpp"/>
+    <ClCompile Include="XbimSolid.cpp" />
     <ClCompile Include="XbimSolidSet.cpp" />
-    <ClCompile Include="XbimVertex.cpp"/>
+    <ClCompile Include="XbimVertex.cpp" />
     <ClCompile Include="XbimVertexSet.cpp" />
-    <ClCompile Include="XbimWire.cpp"/>
+    <ClCompile Include="XbimWire.cpp" />
     <ClCompile Include="XbimWireSet.cpp" />
     <ClCompile Include="BRep\XMatrix.cpp" />
   </ItemGroup>
