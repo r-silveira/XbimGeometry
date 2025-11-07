@@ -158,7 +158,7 @@
       <HintPath>$(PackagesDir)Xbim.Geometry.Abstractions.dll</HintPath>
     </Reference>
     <Reference Include="Xbim.Tessellator">
-      <HintPath>$(PackagesDir)Xbim.Tessallator.dll</HintPath>
+      <HintPath>$(PackagesDir)Xbim.Tessellator.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
