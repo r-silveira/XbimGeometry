@@ -157,6 +157,9 @@
     <Reference Include="Xbim.Geometry.Abstractions">
       <HintPath>$(PackagesDir)Xbim.Geometry.Abstractions.dll</HintPath>
     </Reference>
+    <Reference Include="Xbim.Tessellator">
+      <HintPath>$(PackagesDir)Xbim.Tessallator.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -580,12 +583,6 @@
   <ItemGroup>
     <None Include="cpp.hint" />
     <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Xbim.Tessellator\Xbim.Tessellator.csproj">
-      <Project>{2ff7ea98-4993-491a-9f05-3cac1242828e}</Project>
-      <Name>Xbim.Tessellator</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="OcctLibraries">
