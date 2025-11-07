@@ -21,6 +21,10 @@ Currently this library supports IFC2x2, IFC2x3, IFC4 Addendum 2 and IFC Alignmen
       <Pack>True</Pack>
       <PackagePath>lib</PackagePath>
     </None>
+    <None Update="Readme.md">
+      <PackagePath>\</PackagePath>
+      <Pack>True</Pack>
+    </None>
   </ItemGroup>
 
   <ItemGroup>

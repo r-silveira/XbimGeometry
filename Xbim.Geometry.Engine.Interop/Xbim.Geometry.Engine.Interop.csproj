@@ -101,9 +101,18 @@
   </ItemGroup>
   
   <ItemGroup>
-		
-		<PackageReference Include="Xbim.Geometry.Abstractions" Version="6.2.379-develop" />
 		<PackageReference Include="Xbim.Geometry.Occt" Version="7.8.1" />
 	</ItemGroup>
+  
+  <ItemGroup>
+    <ProjectReference Include="..\Xbim.Geometry.Abstractions\Xbim.Geometry.Abstractions.csproj" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <None Update="Readme.md">
+      <PackagePath>\</PackagePath>
+      <Pack>True</Pack>
+    </None>
+  </ItemGroup>
 
 </Project>
