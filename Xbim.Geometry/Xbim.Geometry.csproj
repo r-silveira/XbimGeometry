@@ -5,7 +5,7 @@
     <Description>
       xBIM Geometry is an optional component of the XBIM Toolkit  providing support for generation of 3D Geometry from Ifc4 and Ifc2x3 representations.
 Use this package to update your XBim IModels to contain geometry that can be visualised in 3D.
-Currently this library supports IFC2x2, IFC2x3, IFC4 Addendum 2 and IFC Alignment (IFC4x1) schema.
+Currently this library supports IFC2x2, IFC2x3, IFC4 Addendum 2 TC1 and IFC4.3 ADD2.
     </Description>
     <TargetFrameworks>net472;net8.0</TargetFrameworks>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
@@ -33,6 +33,7 @@ Currently this library supports IFC2x2, IFC2x3, IFC4 Addendum 2 and IFC Alignmen
     <None Include="..\xbim-toolkit-icon.png" Pack="True" PackagePath="\" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Xbim.Geometry.Abstractions\Xbim.Geometry.Abstractions.csproj" />
     <ProjectReference Include="..\Xbim.Geometry.Engine.Interop\Xbim.Geometry.Engine.Interop.csproj" />
     <ProjectReference Include="..\Xbim.ModelGeometry.Scene\Xbim.ModelGeometry.Scene.csproj" />
     <ProjectReference Include="..\Xbim.Tessellator\Xbim.Tessellator.csproj" />
