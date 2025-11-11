@@ -638,6 +638,7 @@ namespace Xbim.Tessellator
             return triangulatedMesh;            
         }
 
+
         private XbimTriangulatedMesh Triangulate(IIfcTriangulatedFaceSet triangulation)
         {
             var faceId = 0;
