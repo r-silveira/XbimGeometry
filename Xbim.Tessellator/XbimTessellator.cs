@@ -638,11 +638,6 @@ namespace Xbim.Tessellator
             return triangulatedMesh;            
         }
 
-        private static int TessCombineCallback(Vec3 position, int[] data, double[] weights)
-        {
-            return -1; // fake index to indicate that the vertex needs to be created later
-        }
-
         private XbimTriangulatedMesh Triangulate(IIfcTriangulatedFaceSet triangulation)
         {
             var faceId = 0;
